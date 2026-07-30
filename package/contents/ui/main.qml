@@ -164,48 +164,87 @@ PlasmoidItem {
     // Phase windows are normalised to 1.0 = one full data interval.
     // Keep the threshold just above 1.0 so the animation expires between
     // data updates rather than staying permanently active.
-    readonly property bool _anyAnimating: plasmoid.configuration.smoothScroll && ((root.showPingSection && root._pingPhaseStart > 0 && root.pingScrollPhase() < 1.05) || (root.showNetworkSpeed && root._netPhaseStart > 0 && root.netScrollPhase() < 1.05) || (root.showCpuSection && root._cpuPhaseStart > 0 && root.cpuScrollPhase() < 1.05) || (root.showMemorySection && root._memPhaseStart > 0 && root.memScrollPhase() < 1.05) || (root.showDiskSection && root._dskPhaseStart > 0 && root.diskScrollPhase() < 1.05) || (root.showCustomSection && root._custPhaseStart > 0 && root.custScrollPhase() < 1.05) || (root.showGpuSection && root._gpuPhaseStart > 0 && root.gpuScrollPhase() < 1.05))
+    // NOTE: We deliberately do NOT use a readonly binding for "is anything
+    // animating?". The phase functions read Date.now(), which Qt's binding
+    // system cannot track, so such a binding would never re-evaluate to
+    // false once data arrives, and the ticker would run forever (a major
+    // source of constant CPU). Instead the ticker is started on each data
+    // update and stops ITSELF once every phase has expired past 1.0.
+    function _anyAnimatingNow() {
+        if (!plasmoid.configuration.smoothScroll)
+            return false;
+        if (root.showPingSection && root._pingPhaseStart > 0 && root.pingScrollPhase() < 1.05)
+            return true;
+        if (root.showNetworkSpeed && root._netPhaseStart > 0 && root.netScrollPhase() < 1.05)
+            return true;
+        if (root.showCpuSection && root._cpuPhaseStart > 0 && root.cpuScrollPhase() < 1.05)
+            return true;
+        if (root.showMemorySection && root._memPhaseStart > 0 && root.memScrollPhase() < 1.05)
+            return true;
+        if (root.showDiskSection && root._dskPhaseStart > 0 && root.diskScrollPhase() < 1.05)
+            return true;
+        if (root.showCustomSection && root._custPhaseStart > 0 && root.custScrollPhase() < 1.05)
+            return true;
+        if (root.showGpuSection && root._gpuPhaseStart > 0 && root.gpuScrollPhase() < 1.05)
+            return true;
+        return false;
+    }
+
+    // Start the ticker whenever new data lands on any channel. The ticker
+    // then stops itself once all phases have expired (see onTriggered).
+    function _ensureScrollTicker() {
+        if (plasmoid.configuration.smoothScroll && !scrollTicker.running)
+            scrollTicker.start();
+    }
     Timer {
         id: scrollTicker
         interval: root._tickInterval
         repeat: true
-        running: root._anyAnimating
+        running: false
         onTriggered: {
-            // Advance every tick. The interval is already derived from targetFps,
-            // so the previous "skip every 3rd frame" only added an uneven 2-on/
-            // 1-off cadence (16/16/33 ms) — the very stutter it claimed to avoid.
             root.scrollTick = (root.scrollTick + 1) & 0x7fffffff;
+            // Self-disable: once no phase is still animating, stop the timer so
+            // we do not keep repainting canvases (and burning CPU) between updates.
+            if (!root._anyAnimatingNow())
+                scrollTicker.stop();
         }
     }
 
     onHistoriesChanged: {
         _pingInterval = _measureInterval(_pingPhaseStart, _pingInterval, 200, 30000);
         _pingPhaseStart = Date.now();
+        _ensureScrollTicker();
     }
     onDlHistoryChanged: {
         _netInterval = _measureInterval(_netPhaseStart, _netInterval, 200, 8000);
         _netPhaseStart = Date.now();
+        _ensureScrollTicker();
     }
     onCpuHistoryChanged: {
         _cpuInterval = _measureInterval(_cpuPhaseStart, _cpuInterval, 200, 8000);
         _cpuPhaseStart = Date.now();
+        _ensureScrollTicker();
     }
     onMemHistoryChanged: {
         _memInterval = _measureInterval(_memPhaseStart, _memInterval, 400, 16000);
         _memPhaseStart = Date.now();
+        _ensureScrollTicker();
     }
     onCustomHistoryChanged: {
         _custInterval = _measureInterval(_custPhaseStart, _custInterval, 200, 120000);
         _custPhaseStart = Date.now();
+        _ensureScrollTicker();
     }
     onGpuHistoryChanged: {
         _gpuInterval = _measureInterval(_gpuPhaseStart, _gpuInterval, 400, 16000);
         _gpuPhaseStart = Date.now();
+        _ensureScrollTicker();
     }
 
     function restartDiskScroll() {
         _dskInterval = _measureInterval(_dskPhaseStart, _dskInterval, 200, 8000);
         _dskPhaseStart = Date.now();
+        _ensureScrollTicker();
     }
 
     // ── ping state ────────────────────────────────────────────────────────────
@@ -339,7 +378,7 @@ PlasmoidItem {
         }
     }
     Timer {
-        interval: 1000
+        interval: Math.max(1, plasmoid.configuration.updateInterval) * 1000
         running: root.showNetworkSpeed
         repeat: true
         onTriggered: {
@@ -368,7 +407,7 @@ PlasmoidItem {
         }
     }
     Timer {
-        interval: 8000
+        interval: Math.max(4, plasmoid.configuration.updateInterval) * 8000
         running: root.showNetworkSpeed && plasmoid.configuration.netShowInfo
         repeat: true
         triggeredOnStart: true
@@ -471,7 +510,7 @@ PlasmoidItem {
         }
     }
     Timer {
-        interval: 1000
+        interval: Math.max(1, plasmoid.configuration.updateInterval) * 1000
         running: root.showCpuSection
         repeat: true
         onTriggered: {
@@ -562,7 +601,7 @@ PlasmoidItem {
         }
     }
     Timer {
-        interval: 2000
+        interval: Math.max(1, plasmoid.configuration.updateInterval) * 2000
         running: root.showMemorySection
         repeat: true
         onTriggered: {
@@ -735,7 +774,7 @@ PlasmoidItem {
     }
 
     Timer {
-        interval: 2000
+        interval: Math.max(1, plasmoid.configuration.updateInterval) * 2000
         running: root.showGpuSection
         repeat: true
         onTriggered: {
@@ -931,7 +970,7 @@ PlasmoidItem {
     }
 
     Timer {
-        interval: 3000
+        interval: Math.max(1, plasmoid.configuration.updateInterval) * 3000
         running: root.showHwSensors && plasmoid.visible
         repeat: true
         triggeredOnStart: true
@@ -1195,7 +1234,7 @@ PlasmoidItem {
     }
 
     Timer {
-        interval: 30000
+        interval: Math.max(1, plasmoid.configuration.updateInterval) * 30000
         running: root.showOsInfo && plasmoid.visible
         repeat: true
         triggeredOnStart: true
@@ -1232,7 +1271,7 @@ PlasmoidItem {
     }
 
     Timer {
-        interval: 5000
+        interval: Math.max(1, plasmoid.configuration.updateInterval) * 5000
         running: root.showPowerSection && plasmoid.visible
         repeat: true
         triggeredOnStart: true

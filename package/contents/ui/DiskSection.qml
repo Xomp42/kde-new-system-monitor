@@ -32,7 +32,7 @@ ColumnLayout {
     }
 
     Timer {
-        interval: 1000
+        interval: Math.max(1, plasmoid.configuration.updateInterval) * 1000
         running: root.showDiskSection
         repeat: true
         onTriggered: {

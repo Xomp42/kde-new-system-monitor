@@ -32,6 +32,13 @@
             <default>60</default>
         </entry>
 
+        <!-- Base polling interval (seconds) for all sensors. CPU/Network/Disk
+             poll at this rate; Memory/GPU at 2×; Hardware Sensors at 3×;
+             Power at 5×; OS Info at 30×. Higher = less CPU. -->
+        <entry name="updateInterval" type="Int">
+            <default>1</default>
+        </entry>
+
         <!-- Alert thresholds -->
         <entry name="latencyThreshold" type="Int">
             <default>100</default>

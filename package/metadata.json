@@ -12,8 +12,8 @@
         "Icon": "org.muddyblack.newSystemMonitor",
         "Id": "org.muddyblack.newSystemMonitor",
         "License": "MIT",
-        "Name": "New System Monitor",
-        "Version": "1.1.4",
+        "Name": "Experimental-sys-monitor",
+        "Version": "1.1.5 Beta",
         "Website": "https://github.com/Muddyblack/kde-glassy-system-monitor"
     },
     "X-Plasma-API-Minimum-Version": "6.0"

@@ -1,3 +1,5 @@
+do each changes one at a time. Last time we did all the changes at once. It completely broke the widget. We will check one item in this list then only proceed to next item.
+
 1. Adjust polling rate and optimize code. The widget is using a lot of cpu for a widget. Add a polling rate setting to the widget. 
 
 2. Remove frosted glass setting from settings menu. 
@@ -7,7 +9,6 @@
 4. Background colour picker does not have alpha value in colour code. 
 Solve this by Either adding alpha value to hex code or have percentage alpha value show beside the alpha slider.
 
-do each changes one at a time. Last time we did all the changes at once. It completely broke the widget. 
-
 Change version number for each edit. 
 
+Also change widget name to experimental-sys-monitor and add beta tag to version number.
