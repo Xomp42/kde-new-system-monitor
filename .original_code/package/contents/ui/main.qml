@@ -31,7 +31,7 @@ PlasmoidItem {
     Layout.preferredHeight: {
         if (root.isInPanel)
             return -1;
-        const m = 16;
+        const m = plasmoid.configuration.showBg ? 16 : 4;
         const title = 24;
         const stats = plasmoid.configuration.showStats && root.showPingSection ? 28 : 0;
         const legend = plasmoid.configuration.showLegend ? 18 : 0;
@@ -164,96 +164,48 @@ PlasmoidItem {
     // Phase windows are normalised to 1.0 = one full data interval.
     // Keep the threshold just above 1.0 so the animation expires between
     // data updates rather than staying permanently active.
-    // NOTE: We deliberately do NOT use a readonly binding for "is anything
-    // animating?". The phase functions read Date.now(), which Qt's binding
-    // system cannot track, so such a binding would never re-evaluate to
-    // false once data arrives, and the ticker would run forever (a major
-    // source of constant CPU). Instead the ticker is started on each data
-    // update and stops ITSELF once every phase has expired past 1.0.
-    function _anyAnimatingNow() {
-        if (!plasmoid.configuration.smoothScroll)
-            return false;
-        if (root.showPingSection && root._pingPhaseStart > 0 && root.pingScrollPhase() < 1.05)
-            return true;
-        if (root.showNetworkSpeed && root._netPhaseStart > 0 && root.netScrollPhase() < 1.05)
-            return true;
-        if (root.showCpuSection && root._cpuPhaseStart > 0 && root.cpuScrollPhase() < 1.05)
-            return true;
-        if (root.showMemorySection && root._memPhaseStart > 0 && root.memScrollPhase() < 1.05)
-            return true;
-        if (root.showDiskSection && root._dskPhaseStart > 0 && root.diskScrollPhase() < 1.05)
-            return true;
-        if (root.showCustomSection && root._custPhaseStart > 0 && root.custScrollPhase() < 1.05)
-            return true;
-        if (root.showGpuSection && root._gpuPhaseStart > 0 && root.gpuScrollPhase() < 1.05)
-            return true;
-        return false;
-    }
-
-    // Start the ticker whenever new data lands on any channel. The ticker
-    // then stops itself once all phases have expired (see onTriggered).
-    function _ensureScrollTicker() {
-        if (plasmoid.configuration.smoothScroll && !scrollTicker.running)
-            scrollTicker.start();
-    }
-    function _bgRadius(name) {
-        var v = plasmoid.configuration[name];
-        if (v !== undefined && v !== null && v !== "")
-            return Number(v);
-        var legacy = plasmoid.configuration.bgRadius;
-        if (legacy !== undefined && legacy !== null && legacy !== "")
-            return Number(legacy);
-        return 0;
-    }
+    readonly property bool _anyAnimating: plasmoid.configuration.smoothScroll && ((root.showPingSection && root._pingPhaseStart > 0 && root.pingScrollPhase() < 1.05) || (root.showNetworkSpeed && root._netPhaseStart > 0 && root.netScrollPhase() < 1.05) || (root.showCpuSection && root._cpuPhaseStart > 0 && root.cpuScrollPhase() < 1.05) || (root.showMemorySection && root._memPhaseStart > 0 && root.memScrollPhase() < 1.05) || (root.showDiskSection && root._dskPhaseStart > 0 && root.diskScrollPhase() < 1.05) || (root.showCustomSection && root._custPhaseStart > 0 && root.custScrollPhase() < 1.05) || (root.showGpuSection && root._gpuPhaseStart > 0 && root.gpuScrollPhase() < 1.05))
     Timer {
         id: scrollTicker
         interval: root._tickInterval
         repeat: true
-        running: false
+        running: root._anyAnimating
         onTriggered: {
+            // Advance every tick. The interval is already derived from targetFps,
+            // so the previous "skip every 3rd frame" only added an uneven 2-on/
+            // 1-off cadence (16/16/33 ms) — the very stutter it claimed to avoid.
             root.scrollTick = (root.scrollTick + 1) & 0x7fffffff;
-            // Self-disable: once no phase is still animating, stop the timer so
-            // we do not keep repainting canvases (and burning CPU) between updates.
-            if (!root._anyAnimatingNow())
-                scrollTicker.stop();
         }
     }
 
     onHistoriesChanged: {
         _pingInterval = _measureInterval(_pingPhaseStart, _pingInterval, 200, 30000);
         _pingPhaseStart = Date.now();
-        _ensureScrollTicker();
     }
     onDlHistoryChanged: {
         _netInterval = _measureInterval(_netPhaseStart, _netInterval, 200, 8000);
         _netPhaseStart = Date.now();
-        _ensureScrollTicker();
     }
     onCpuHistoryChanged: {
         _cpuInterval = _measureInterval(_cpuPhaseStart, _cpuInterval, 200, 8000);
         _cpuPhaseStart = Date.now();
-        _ensureScrollTicker();
     }
     onMemHistoryChanged: {
         _memInterval = _measureInterval(_memPhaseStart, _memInterval, 400, 16000);
         _memPhaseStart = Date.now();
-        _ensureScrollTicker();
     }
     onCustomHistoryChanged: {
         _custInterval = _measureInterval(_custPhaseStart, _custInterval, 200, 120000);
         _custPhaseStart = Date.now();
-        _ensureScrollTicker();
     }
     onGpuHistoryChanged: {
         _gpuInterval = _measureInterval(_gpuPhaseStart, _gpuInterval, 400, 16000);
         _gpuPhaseStart = Date.now();
-        _ensureScrollTicker();
     }
 
     function restartDiskScroll() {
         _dskInterval = _measureInterval(_dskPhaseStart, _dskInterval, 200, 8000);
         _dskPhaseStart = Date.now();
-        _ensureScrollTicker();
     }
 
     // ── ping state ────────────────────────────────────────────────────────────
@@ -387,7 +339,7 @@ PlasmoidItem {
         }
     }
     Timer {
-        interval: Math.max(1, plasmoid.configuration.updateInterval) * 1000
+        interval: 1000
         running: root.showNetworkSpeed
         repeat: true
         onTriggered: {
@@ -416,7 +368,7 @@ PlasmoidItem {
         }
     }
     Timer {
-        interval: Math.max(4, plasmoid.configuration.updateInterval) * 8000
+        interval: 8000
         running: root.showNetworkSpeed && plasmoid.configuration.netShowInfo
         repeat: true
         triggeredOnStart: true
@@ -519,7 +471,7 @@ PlasmoidItem {
         }
     }
     Timer {
-        interval: Math.max(1, plasmoid.configuration.updateInterval) * 1000
+        interval: 1000
         running: root.showCpuSection
         repeat: true
         onTriggered: {
@@ -610,7 +562,7 @@ PlasmoidItem {
         }
     }
     Timer {
-        interval: Math.max(1, plasmoid.configuration.updateInterval) * 2000
+        interval: 2000
         running: root.showMemorySection
         repeat: true
         onTriggered: {
@@ -783,7 +735,7 @@ PlasmoidItem {
     }
 
     Timer {
-        interval: Math.max(1, plasmoid.configuration.updateInterval) * 2000
+        interval: 2000
         running: root.showGpuSection
         repeat: true
         onTriggered: {
@@ -979,7 +931,7 @@ PlasmoidItem {
     }
 
     Timer {
-        interval: Math.max(1, plasmoid.configuration.updateInterval) * 3000
+        interval: 3000
         running: root.showHwSensors && plasmoid.visible
         repeat: true
         triggeredOnStart: true
@@ -1243,7 +1195,7 @@ PlasmoidItem {
     }
 
     Timer {
-        interval: Math.max(1, plasmoid.configuration.updateInterval) * 30000
+        interval: 30000
         running: root.showOsInfo && plasmoid.visible
         repeat: true
         triggeredOnStart: true
@@ -1280,7 +1232,7 @@ PlasmoidItem {
     }
 
     Timer {
-        interval: Math.max(1, plasmoid.configuration.updateInterval) * 5000
+        interval: 5000
         running: root.showPowerSection && plasmoid.visible
         repeat: true
         triggeredOnStart: true
@@ -1421,51 +1373,114 @@ PlasmoidItem {
     fullRepresentation: Item {
         id: container
 
-        // Rounded background card with individual corner radii.
-        // QtQuick Rectangle only supports a single radius, so we draw the
-        // background on a Canvas to allow each corner to be set independently.
-        Canvas {
-            id: bgCanvas
+        // glassy background card — flat path (frostedGlass off)
+        Rectangle {
             anchors.fill: parent
-            antialiasing: true
-            renderStrategy: Canvas.Image
-            Connections {
-                target: plasmoid.configuration
-                ignoreUnknownSignals: true
-                function onBgRadiusTLChanged() { bgCanvas.requestPaint(); }
-                function onBgRadiusTRChanged() { bgCanvas.requestPaint(); }
-                function onBgRadiusBRChanged() { bgCanvas.requestPaint(); }
-                function onBgRadiusBLChanged() { bgCanvas.requestPaint(); }
-                function onBgColorChanged() { bgCanvas.requestPaint(); }
+            radius: plasmoid.configuration.bgRadius
+            visible: plasmoid.configuration.showBg && !plasmoid.configuration.frostedGlass
+            color: plasmoid.configuration.bgColor
+            border.color: Qt.rgba(1, 1, 1, 0.12)
+            border.width: 1
+            Rectangle {
+                anchors {
+                    left: parent.left
+                    right: parent.right
+                    top: parent.top
+                }
+                anchors.leftMargin: 12
+                anchors.rightMargin: 12
+                anchors.topMargin: 1
+                height: 1
+                radius: 0.5
+                color: Qt.rgba(1, 1, 1, 0.20)
             }
-            onWidthChanged: requestPaint();
-            onHeightChanged: requestPaint();
-            onXChanged: requestPaint();
-            onYChanged: requestPaint();
-            Component.onCompleted: requestPaint();
-            onPaint: {
-                if (width < 1 || height < 1) return;
-                var ctx = getContext("2d");
-                ctx.reset();
-                var w = width, h = height;
-                var tl = root._bgRadius("bgRadiusTL");
-                var tr = root._bgRadius("bgRadiusTR");
-                var br = root._bgRadius("bgRadiusBR");
-                var bl = root._bgRadius("bgRadiusBL");
-                var c = plasmoid.configuration.bgColor || "#800d0f1a";
-                ctx.beginPath();
-                ctx.moveTo(tl, 0);
-                ctx.lineTo(w - tr, 0);
-                ctx.arcTo(w, 0, w, tr, tr);
-                ctx.lineTo(w, h - br);
-                ctx.arcTo(w, h, w - br, h, br);
-                ctx.lineTo(bl, h);
-                ctx.arcTo(0, h, 0, h - bl, bl);
-                ctx.lineTo(0, tl);
-                ctx.arcTo(0, 0, tl, 0, tl);
-                ctx.closePath();
-                ctx.fillStyle = c;
-                ctx.fill();
+        }
+
+        // ── frosted-glass card (frostedGlass on) ─────────────────────────────
+        // Composite the fill + tint + top highlight into one hidden source, blur
+        // it on the GPU, then round the whole result with a mask pass. Plasma
+        // exposes no backdrop-blur API to QML, so this frosts the card's OWN
+        // fill — a soft premium glass look that is GPU-cheap and doesn't touch
+        // the CPU canvas path. Same structure as the Audio Visualizer card.
+        readonly property bool _frosted: plasmoid.configuration.showBg && plasmoid.configuration.frostedGlass
+
+        Rectangle {
+            id: frostSource
+            anchors.fill: parent
+            visible: false
+            radius: plasmoid.configuration.bgRadius
+            color: plasmoid.configuration.bgColor
+
+            // Diagonal sheen baked into the source so the blur smears it into a
+            // soft glass gradient rather than a flat tint.
+            Rectangle {
+                anchors.fill: parent
+                radius: parent.radius
+                gradient: Gradient {
+                    orientation: Gradient.Vertical
+                    GradientStop {
+                        position: 0.0
+                        color: Qt.rgba(1, 1, 1, 0.10)
+                    }
+                    GradientStop {
+                        position: 0.35
+                        color: Qt.rgba(1, 1, 1, 0.025)
+                    }
+                    GradientStop {
+                        position: 1.0
+                        color: Qt.rgba(0, 0, 0, 0.06)
+                    }
+                }
+            }
+        }
+
+        MultiEffect {
+            id: frostEffect
+            anchors.fill: parent
+            visible: container._frosted
+            source: frostSource
+            blurEnabled: true
+            blur: plasmoid.configuration.frostStrength
+            blurMax: 40
+            autoPaddingEnabled: false
+            maskEnabled: true
+            maskSource: frostMask
+        }
+
+        // Rounded alpha mask for the frosted composite — rendered to a texture,
+        // never shown. (A Rectangle radius+clip only clips to the square bbox,
+        // so the blur would otherwise leak past the rounded corners.)
+        Rectangle {
+            id: frostMask
+            anchors.fill: parent
+            radius: plasmoid.configuration.bgRadius
+            color: "black"
+            visible: false
+            layer.enabled: true
+        }
+
+        // Crisp border + 1px top highlight drawn LIVE on top of the blur so they
+        // stay sharp (blurring them would muddy the edge that sells the glass).
+        Rectangle {
+            anchors.fill: parent
+            visible: container._frosted
+            radius: plasmoid.configuration.bgRadius
+            color: "transparent"
+            antialiasing: true
+            border.color: Qt.rgba(1, 1, 1, 0.14)
+            border.width: 1
+            Rectangle {
+                anchors {
+                    left: parent.left
+                    right: parent.right
+                    top: parent.top
+                }
+                anchors.leftMargin: 12
+                anchors.rightMargin: 12
+                anchors.topMargin: 1
+                height: 1
+                radius: 0.5
+                color: Qt.rgba(1, 1, 1, 0.22)
             }
         }
 
@@ -1473,7 +1488,7 @@ PlasmoidItem {
         Rectangle {
             id: alertRing
             anchors.fill: parent
-            radius: Math.max(root._bgRadius("bgRadiusTL"), root._bgRadius("bgRadiusTR"), root._bgRadius("bgRadiusBR"), root._bgRadius("bgRadiusBL"))
+            radius: plasmoid.configuration.bgRadius
             color: "transparent"
             border.color: "#ff4444"
             border.width: 2
@@ -1505,7 +1520,7 @@ PlasmoidItem {
 
         ColumnLayout {
             anchors.fill: parent
-            anchors.margins: 10
+            anchors.margins: plasmoid.configuration.showBg ? 10 : 2
             spacing: 4
 
             // title row — centered label + optional CPU total on the right

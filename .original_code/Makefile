@@ -25,9 +25,9 @@ pack: ## build .plasmoid archive
 	@if command -v nix >/dev/null 2>&1 && [ -f flake.nix ]; then \
 	  nix run .#pack; \
 	else \
-	  ver=$$(jq -r '.Version' info.json); \
-	  name=$$(jq -r '.Name' info.json); \
-	  out="$$PWD/$$name $$ver.plasmoid"; \
+	  ver=$$(grep -oE '"Version":[[:space:]]*"[^"]+"' package/metadata.json | head -1 | sed -E 's/.*"([^"]+)"$$/\1'); \
+	  name=$$(basename "$$PWD"); \
+	  out="$$PWD/$$name-$$ver.plasmoid"; \
 	  rm -f "$$out"; \
 	  (cd package && zip -r "$$out" . -x '*.swp' '*~'); \
 	  echo "wrote $$out"; \

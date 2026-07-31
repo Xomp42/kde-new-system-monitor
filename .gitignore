@@ -14,3 +14,5 @@ result
 
 # System junk
 .DS_Store
+info.json
+info.txt
