@@ -1,6 +1,12 @@
-## This is not my project. I just used AI to change the background from glassy to single colour with transparency. Original project :  
+# This is not my project. I just used AI to fork it to my liking. 
 
-#### https://github.com/Muddyblack/kde-glassy-system-monitor
+## Original project :  All Credit goes to @Muddyblack
+
+### https://github.com/Muddyblack/kde-glassy-system-monitor
+
+#### I tried to create a plasmoid, but it does not install the icon I want. So use install.sh to install it. (bash: ./install.sh) 
+
+#### ALL INFO BELOW IS THE ORIGINAL README.MD FROM PARENT PROJECT.
 
 <p align="center">
   <img src="./package/icon.png" width="200" alt="Glassy System Monitor Logo">

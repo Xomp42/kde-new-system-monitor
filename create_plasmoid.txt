@@ -1,0 +1,9 @@
+Command to create/generate the plasmoid package:
+
+cd package && zip -r "../Beautiful System Monitor 1.1.6-Beta.plasmoid" . -x '*.swp' '*~'
+
+Or use make:
+make pack
+
+This creates the .plasmoid file that can be installed with:
+kpackagetool6 -t Plasma/Applet -i "Beautiful System Monitor 1.1.6-Beta.plasmoid"

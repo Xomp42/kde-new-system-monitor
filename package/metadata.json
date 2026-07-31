@@ -3,18 +3,18 @@
     "KPlugin": {
         "Authors": [
             {
-                "Name": "muddyblack",
+                "Name": "Xomp42",
                 "Email": ""
             }
         ],
         "Category": "System Information",
-        "Description": "Sleek glassmorphism real-time system monitor (CPU, Memory, Ping latency, and Network bandwidth).",
-        "Icon": "org.muddyblack.newSystemMonitor",
-        "Id": "org.muddyblack.newSystemMonitor",
+        "Description": "Real-time system monitor. Forked from glassy-system-monitor. by Muddyblack",
+        "Icon": "Beautiful.SystemMonitor",
+        "Id": "Beautiful.SystemMonitor",
         "License": "MIT",
-        "Name": "experimental-sys-monitor",
-        "Version": "1.1.6-Beta",
-        "Website": "https://github.com/Muddyblack/kde-glassy-system-monitor"
+        "Name": "Beautiful System Monitor",
+        "Version": "1.0.0",
+        "Website": ""
     },
     "X-Plasma-API-Minimum-Version": "6.0"
 }

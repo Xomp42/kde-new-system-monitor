@@ -1,4 +1,5 @@
 {
-    "Name": "experimental-sys-monitor",
-    "Version": "1.1.7.1-Beta1"
+    "Name": "Beautiful System Monitor",
+    "Version": "1.0.0",
+    "Description": "Real-time system monitor (CPU, Memory, Ping latency, and Network bandwidth)."
 }

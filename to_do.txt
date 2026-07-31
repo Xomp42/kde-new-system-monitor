@@ -1,20 +1,11 @@
-do each changes one at a time. Last time we did all the changes at once. It completely broke the widget. We will check one item in this list then only proceed to next item.
-
 [Completed 1.1.5 beta] 1. Adjust polling rate and optimize code. The widget is using a lot of cpu for a widget. Add a polling rate setting to the widget. 
 
 [Completed 1.1.5 beta] 2. Remove frosted glass setting from settings menu. 
 
-3. Individual corner radius Adjustment. Remove the current corner radius setting. add 4 settings for 4 corners individiually named Top Right, Top Left, Bottom Right, Bottom Left.
+[Completed 1.1.6 beta] 3. Individual corner radius Adjustment. Remove the current corner radius setting. add 4 settings for 4 corners individiually named Top Right, Top Left, Bottom Right, Bottom Left.
 
-4. Background colour picker does not have alpha value in colour code. 
+[Cancelled ] 4. Background colour picker does not have alpha value in colour code. 
 Solve this by Either adding alpha value to hex code or have percentage alpha value show beside the alpha slider.
+This breaks the widget as it uses kdecolorpicker and trying to rewrite it breaks settings window completely. transparency value can be obtained
+by selecting RGB instead of hex.
 
-Change version number for each edit. 
-
-Also change widget name to experimental-sys-monitor and add beta tag to version number.
-
-ignore:
-      "model1": "kilo/kilo-auto/free",
-
-
-Diagnose why a corner radius setting of 12 is rendering as 0 in a UI component. The component's background was recently changed from a frosted glass effect to a solid color with transparency. Investigate whether residual background layers, such as a 100% transparent layer from the previous frosted glass implementation, are overriding or interfering with the corner radius. Provide a technical analysis of the potential conflict and offer code-based solutions to ensure the corner radius is correctly applied and visible.
