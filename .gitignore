@@ -16,3 +16,6 @@ result
 .DS_Store
 info.json
 info.txt
+.claude
+.kilo
+.original_code

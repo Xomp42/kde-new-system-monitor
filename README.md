@@ -1,10 +1,18 @@
 # This is not my project. I just used AI to fork it to my liking. 
 
+### This may contain some bugs as I literally told AI what I wanted and then just tested it. I do not have knowledge of making plasma widgets.
+
 ## Original project :  All Credit goes to @Muddyblack
 
-### https://github.com/Muddyblack/kde-glassy-system-monitor
+### https://github.com/Muddyblack/kde-glassy-system-monitor   https://www.opendesktop.org/p/2360341
 
 #### I tried to create a plasmoid, but it does not install the icon I want. So use install.sh to install it. (bash: ./install.sh) 
+
+#### Changed stuff: 
+
+- 1 Removed glass effect. added plain solid color background with transparency
+- 2 Added polling rate.
+- 3 Added individual corner radius adjustment. 
 
 #### ALL INFO BELOW IS THE ORIGINAL README.MD FROM PARENT PROJECT.
 
